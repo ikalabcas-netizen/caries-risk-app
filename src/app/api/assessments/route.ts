@@ -71,3 +71,26 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ data, total: count, page, limit });
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { ids } = await request.json();
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: 'No IDs provided' }, { status: 400 });
+    }
+
+    const { error } = await getSupabase()
+      .from('assessments')
+      .delete()
+      .in('id', ids);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ deleted: ids.length });
+  } catch {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+}
