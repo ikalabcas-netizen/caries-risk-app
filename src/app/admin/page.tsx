@@ -16,6 +16,8 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [riskFilter, setRiskFilter] = useState('');
 
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -36,6 +38,8 @@ export default function AdminPage() {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       if (riskFilter) params.set('risk_level', riskFilter);
+      params.set('page', String(page));
+      params.set('limit', String(limit));
       const res = await fetch(`/api/assessments?${params.toString()}`);
       const json = await res.json();
       setData(json.data || []);
@@ -46,7 +50,7 @@ export default function AdminPage() {
       setLoading(false);
       setSelectedIds(new Set());
     }
-  }, [search, riskFilter]);
+  }, [search, riskFilter, page, limit]);
 
   const handleToggle = (id: string) => {
     setSelectedIds(prev => {
@@ -234,6 +238,46 @@ export default function AdminPage() {
             />
           )}
         </div>
+
+        {/* Pagination */}
+        {total > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>Rows per page:</span>
+              <select
+                value={limit}
+                onChange={e => { setLimit(parseInt(e.target.value)); setPage(1); }}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+              </select>
+              <span className="ml-3 text-gray-400">
+                {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <span className="px-3 py-1.5 text-sm text-gray-600">
+                Page {page} of {Math.max(1, Math.ceil(total / limit))}
+              </span>
+              <button
+                onClick={() => setPage(p => p + 1)}
+                disabled={page * limit >= total}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
