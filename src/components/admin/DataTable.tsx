@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { AssessmentRecord } from '@/lib/types';
 
 interface DataTableProps {
@@ -54,33 +54,17 @@ const labelMap: Record<string, string> = {
   plaque_acid: 'Plaque Acid',
 };
 
-function DetailPanel({ row }: { row: AssessmentRecord }) {
-  const sections = [
-    {
-      title: 'Part 1: Economic / Social',
-      fields: ['current_occ', 'current_occ_specify', 'housing', 'income'],
-    },
-    {
-      title: 'Part 2: Medical',
-      fields: ['chronic_disease', 'saliva_medication'],
-    },
-    {
-      title: 'Part 3: Behavioral',
-      fields: ['sugar_frequency', 'brushing_freq', 'fluoride_use'],
-    },
-    {
-      title: 'Part 4: Oral Health',
-      fields: ['active_decay', 'decay_tooth_number', 'plaque_16b', 'plaque_11la', 'plaque_26b', 'plaque_46li', 'plaque_31la', 'plaque_36li', 'calculated_sohi', 'appliances', 'condition_improved'],
-    },
-    {
-      title: 'Part 5 & 6: Salivary & Plaque',
-      fields: ['saliva_amount', 'buffer_capacity', 'plaque_acid'],
-    },
-  ];
+const sections = [
+  { title: 'Part 1: Economic / Social', fields: ['current_occ', 'current_occ_specify', 'housing', 'income'] },
+  { title: 'Part 2: Medical', fields: ['chronic_disease', 'saliva_medication'] },
+  { title: 'Part 3: Behavioral', fields: ['sugar_frequency', 'brushing_freq', 'fluoride_use'] },
+  { title: 'Part 4: Oral Health', fields: ['active_decay', 'decay_tooth_number', 'plaque_16b', 'plaque_11la', 'plaque_26b', 'plaque_46li', 'plaque_31la', 'plaque_36li', 'calculated_sohi', 'appliances', 'condition_improved'] },
+  { title: 'Part 5 & 6: Salivary & Plaque', fields: ['saliva_amount', 'buffer_capacity', 'plaque_acid'] },
+];
 
+function DetailPanel({ row }: { row: AssessmentRecord }) {
   return (
     <div className="px-6 py-5 bg-gray-50 border-t border-gray-200">
-      {/* General info row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4 mb-5 pb-4 border-b border-gray-200">
         <DetailField label="Personal ID" value={row.personal_id} />
         <DetailField label="School" value={row.school} />
@@ -89,8 +73,6 @@ function DetailPanel({ row }: { row: AssessmentRecord }) {
         <DetailField label="Occupation" value={row.occupation} />
         <DetailField label="Date of Birth" value={row.dob} />
       </div>
-
-      {/* Sections */}
       {sections.map(section => (
         <div key={section.title} className="mb-4">
           <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-2">{section.title}</h4>
@@ -105,8 +87,6 @@ function DetailPanel({ row }: { row: AssessmentRecord }) {
           </dl>
         </div>
       ))}
-
-      {/* Risk result */}
       <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-3">
         <span className="text-xs text-gray-400 uppercase tracking-wide">Risk Level:</span>
         <RiskBadge level={row.risk_level} />
@@ -115,6 +95,8 @@ function DetailPanel({ row }: { row: AssessmentRecord }) {
     </div>
   );
 }
+
+const COL_COUNT = 11;
 
 export default function DataTable({ data, selectedIds, onToggle, onToggleAll }: DataTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -159,54 +141,48 @@ export default function DataTable({ data, selectedIds, onToggle, onToggleAll }: 
             const isSelected = selectedIds.has(row.id);
             const isExpanded = expandedId === row.id;
             return (
-              <tr key={row.id} className="contents">
-                <td colSpan={11} className="p-0">
-                  <table className="w-full">
-                    <tbody>
-                      <tr
-                        className={`border-b border-gray-100 transition-colors cursor-pointer ${
-                          isSelected ? 'bg-red-50 hover:bg-red-100' : isExpanded ? 'bg-blue-50' : 'hover:bg-gray-50'
-                        }`}
-                        onClick={() => setExpandedId(isExpanded ? null : row.id)}
-                      >
-                        <td className="py-3 px-4 w-10" onClick={e => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => onToggle(row.id)}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                          />
-                        </td>
-                        <td className="py-3 px-4 text-gray-400">{i + 1}</td>
-                        <td className="py-3 px-4 text-gray-600">
-                          {new Date(row.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </td>
-                        <td className="py-3 px-4 text-gray-600 font-mono">{row.personal_id || '-'}</td>
-                        <td className="py-3 px-4 font-medium text-gray-800">{row.patient_name}</td>
-                        <td className="py-3 px-4 text-gray-600">{row.school || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-center">{row.survey_round ?? '-'}</td>
-                        <td className="py-3 px-4 text-gray-600">
-                          {row.age_years !== null ? `${row.age_years}y ${row.age_months ?? 0}m` : '-'}
-                        </td>
-                        <td className="py-3 px-4 text-gray-600">{row.calculated_sohi ?? '-'}</td>
-                        <td className="py-3 px-4"><RiskBadge level={row.risk_level} /></td>
-                        <td className="py-3 px-4 text-gray-400">
-                          <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </td>
-                      </tr>
-                      {isExpanded && (
-                        <tr>
-                          <td colSpan={11}>
-                            <DetailPanel row={row} />
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
+              <Fragment key={row.id}>
+                <tr
+                  className={`border-b border-gray-100 transition-colors cursor-pointer ${
+                    isSelected ? 'bg-red-50 hover:bg-red-100' : isExpanded ? 'bg-blue-50' : 'hover:bg-gray-50'
+                  }`}
+                  onClick={() => setExpandedId(isExpanded ? null : row.id)}
+                >
+                  <td className="py-3 px-4 w-10" onClick={e => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => onToggle(row.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </td>
+                  <td className="py-3 px-4 text-gray-400">{i + 1}</td>
+                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
+                    {new Date(row.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </td>
+                  <td className="py-3 px-4 text-gray-600 font-mono">{row.personal_id || '-'}</td>
+                  <td className="py-3 px-4 font-medium text-gray-800 whitespace-nowrap">{row.patient_name}</td>
+                  <td className="py-3 px-4 text-gray-600">{row.school || '-'}</td>
+                  <td className="py-3 px-4 text-gray-600 text-center">{row.survey_round ?? '-'}</td>
+                  <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
+                    {row.age_years !== null ? `${row.age_years}y ${row.age_months ?? 0}m` : '-'}
+                  </td>
+                  <td className="py-3 px-4 text-gray-600">{row.calculated_sohi ?? '-'}</td>
+                  <td className="py-3 px-4"><RiskBadge level={row.risk_level} /></td>
+                  <td className="py-3 px-4 text-gray-400">
+                    <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </td>
+                </tr>
+                {isExpanded && (
+                  <tr>
+                    <td colSpan={COL_COUNT} className="p-0">
+                      <DetailPanel row={row} />
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             );
           })}
         </tbody>
